@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  app-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile-cli
+#    ports:
+#        - "8001:8000"       # This is for php-cli
+    volumes:
+      - .:/var/www          # This is for php-cli
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-cli.rule=Host(`test-laravel-cli.local`)"
+      - "traefik.http.services.app-cli.loadbalancer.server.port=8000"    # This is container port
+networks:
+  test-network:
+    external: true
