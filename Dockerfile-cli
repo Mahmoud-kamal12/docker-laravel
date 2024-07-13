@@ -1,28 +1,30 @@
-# Use an official PHP image as a parent image
 FROM php:8.0-cli
 
-# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     libzip-dev \
     unzip \
-    git \
-    && docker-php-ext-install zip
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd \
+    && docker-php-ext-install zip \
+    && docker-php-ext-install pdo pdo_mysql
 
-# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set the working directory
 WORKDIR /var/www
 
-# Copy the application code into the container
 COPY . .
 
-# Set the entrypoint script
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
+
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Set the entrypoint to run Composer install and then start the application
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# Default command (can be overridden by `docker-compose` or `docker run`)
 CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
